@@ -42,11 +42,11 @@ and can be translated.
 Syncing with transifex
 ----------------------
 
-We are using http://transifex.net as a frontend for translating the client.
+We are using https://transifex.net as a frontend for translating the client.
 
 https://www.transifex.net/projects/p/bitcoin/resource/tx/
 
-The "transifex client" (see: http://help.transifex.net/features/client/)
+The "transifex client" (see: https://help.transifex.net/features/client/)
 will help with fetching new translations from transifex. Use the following
 config to be able to connect with the client.
 

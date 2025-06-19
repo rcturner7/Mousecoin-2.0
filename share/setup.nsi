@@ -7,7 +7,7 @@ SetCompressor /SOLID lzma
 !define REGKEY "SOFTWARE\$(^Name)"
 !define VERSION 0.3.0
 !define COMPANY "Mousecoin project"
-!define URL http://www.Mousecoin.ru/
+!define URL https://www.Mousecoin.ru/
 
 # MUI Symbol Definitions
 !define MUI_ICON "../share/pixmaps/Mousecoin.ico"
