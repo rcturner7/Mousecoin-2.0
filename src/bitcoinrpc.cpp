@@ -723,9 +723,11 @@ static void RPCAcceptHandler(boost::shared_ptr< basic_socket_acceptor<Protocol, 
 
     AcceptedConnectionImpl<ip::tcp>* tcp_conn = dynamic_cast< AcceptedConnectionImpl<ip::tcp>* >(conn);
 
-    // TODO: Actually handle errors
+    // Log and clean up immediately if there was an error accepting the connection
     if (error)
     {
+        error("RPCAcceptHandler: %s", error.message().c_str());
+        conn->close();
         delete conn;
     }
 
