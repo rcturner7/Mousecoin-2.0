@@ -78,7 +78,7 @@ To use UPnP for port forwarding behind a NAT router (recommended, as more connec
 (in **Qt Creator**, you can find the setting for additional qmake arguments under "Projects" -> "Build Settings" -> "Build Steps", then click "Details" next to **qmake**)
 
 This requires miniupnpc for UPnP port mapping.  It can be downloaded from
-http://miniupnp.tuxfamily.org/files/.  UPnP support is not compiled in by default.
+https://miniupnp.tuxfamily.org/files/.  UPnP support is not compiled in by default.
 
 Set USE_UPNP to a different value to control this:
 
