@@ -1288,6 +1288,33 @@ boost::filesystem::path GetSpecialFolderPath(int nFolder, bool fCreate)
 }
 #endif
 
+std::string ShellEscape(const std::string& arg)
+{
+#ifdef WIN32
+    std::string escaped = "\"";
+    for (std::string::const_iterator it = arg.begin(); it != arg.end(); ++it)
+    {
+        if (*it == '"')
+            escaped += "\\\"";
+        else
+            escaped += *it;
+    }
+    escaped += "\"";
+    return escaped;
+#else
+    std::string escaped = "'";
+    for (std::string::const_iterator it = arg.begin(); it != arg.end(); ++it)
+    {
+        if (*it == '\'')
+            escaped += "'\\''";
+        else
+            escaped += *it;
+    }
+    escaped += "'";
+    return escaped;
+#endif
+}
+
 void runCommand(std::string strCommand)
 {
     int nErr = ::system(strCommand.c_str());
