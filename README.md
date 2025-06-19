@@ -38,6 +38,11 @@ Transaction confirmations: 30 blocks<br>
 700,001–750,000 10%<br>
 750,001 — Max Supply 5%<br>
 
+## <b><u>Build:</u></b><br>
+- Install the required packages listed in [doc/build-unix.txt](doc/build-unix.txt) and run `cd src && make -f makefile.unix` for the headless daemon.<br>
+- Build the Qt wallet with `qmake Mic3.pro` followed by `make`.<br>
+- Platform specific details are available in [doc/build-osx.txt](doc/build-osx.txt) and [doc/build-msw.txt](doc/build-msw.txt).<br>
+
 ## <b><u> :earth_americas: OFFICIAL LINKS:</u></b><br>
 | Services | Links |
 | --- | --- |
