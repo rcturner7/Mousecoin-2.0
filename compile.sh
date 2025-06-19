@@ -5,7 +5,7 @@ MXE_INCLUDE_PATH=/mnt/mxe/usr/i686-w64-mingw32.static/include
 MXE_LIB_PATH=/mnt/mxe/usr/i686-w64-mingw32.static/lib
 SECP256K1_LIB_PATH=/usr/lib:/usr/local/bin
 
-cd /mnt/Mic2.0/src/leveldb
+cd "$(dirname "$0")/src/leveldb"
 TARGET_OS=NATIVE_WINDOWS make CC=/mnt/mxe/usr/bin/i686-w64-mingw32.static-gcc CXX=/mnt/mxe/usr/bin/i686-w64-mingw32.static-g++
 
 cd ../..
