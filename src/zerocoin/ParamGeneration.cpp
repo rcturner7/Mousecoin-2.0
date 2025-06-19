@@ -645,10 +645,27 @@ generateIntegerFromSeed(uint32_t numBits, uint256 seed, uint32_t *numIterations)
 bool
 primalityTestByTrialDivision(uint32_t candidate)
 {
-	// TODO: HACK HACK WRONG WRONG
-	Bignum canBignum(candidate);
+        if(candidate < 2) {
+                return false;
+        }
 
-	return canBignum.isPrime();
+        // handle small primes quickly
+        if(candidate < 4) {
+                return true;
+        }
+
+        // even numbers other than two are not prime
+        if((candidate & 1) == 0) {
+                return false;
+        }
+
+        for(uint32_t i = 3; i <= candidate / i; i += 2) {
+                if(candidate % i == 0) {
+                        return false;
+                }
+        }
+
+        return true;
 }
 
 } // namespace libzerocoin
