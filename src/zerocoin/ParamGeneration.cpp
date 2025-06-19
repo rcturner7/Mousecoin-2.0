@@ -645,22 +645,16 @@ generateIntegerFromSeed(uint32_t numBits, uint256 seed, uint32_t *numIterations)
 bool
 primalityTestByTrialDivision(uint32_t candidate)
 {
-        if(candidate < 2) {
+        if (candidate < 2) {
                 return false;
         }
 
-        // handle small primes quickly
-        if(candidate < 4) {
-                return true;
+        if ((candidate % 2) == 0) {
+                return candidate == 2;
         }
 
-        // even numbers other than two are not prime
-        if((candidate & 1) == 0) {
-                return false;
-        }
-
-        for(uint32_t i = 3; i <= candidate / i; i += 2) {
-                if(candidate % i == 0) {
+        for (uint32_t i = 3; i * i <= candidate; i += 2) {
+                if ((candidate % i) == 0) {
                         return false;
                 }
         }
