@@ -17,6 +17,27 @@ BOOST_AUTO_TEST_CASE(base64_testvectors)
         std::string strDec = DecodeBase64(strEnc);
         BOOST_CHECK(strDec == vstrIn[i]);
     }
+
+    {
+        bool fInvalid = false;
+        std::vector<unsigned char> vchRet;
+
+        vchRet = DecodeBase64("!!", &fInvalid);
+        BOOST_CHECK(fInvalid || vchRet.empty());
+        BOOST_CHECK(DecodeBase64("!!").empty());
+
+        fInvalid = false;
+        vchRet = DecodeBase64("Zg", &fInvalid);
+        BOOST_CHECK(fInvalid);
+
+        fInvalid = false;
+        vchRet = DecodeBase64("Zg=", &fInvalid);
+        BOOST_CHECK(fInvalid);
+
+        fInvalid = false;
+        vchRet = DecodeBase64("Zg===", &fInvalid);
+        BOOST_CHECK(fInvalid);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
