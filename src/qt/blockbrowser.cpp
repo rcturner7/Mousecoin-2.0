@@ -56,7 +56,7 @@ std::string getBlockHash(int Height)
     int desiredheight;
     desiredheight = Height;
     if (desiredheight < 0 || desiredheight > nBestHeight)
-        return 0;
+        return std::string();
 
     CBlock block;
     CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
@@ -84,7 +84,7 @@ std::string getBlockMerkle(int Height)
     uint256 hash(strHash);
 
     if (mapBlockIndex.count(hash) == 0)
-        return 0;
+        return std::string();
 
     CBlock block;
     CBlockIndex* pblockindex = mapBlockIndex[hash];
@@ -123,7 +123,7 @@ std::string getBlockDebug(int Height)
     uint256 hash(strHash);
 
     if (mapBlockIndex.count(hash) == 0)
-        return 0;
+        return std::string();
 
     CBlock block;
     CBlockIndex* pblockindex = mapBlockIndex[hash];
