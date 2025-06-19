@@ -236,6 +236,7 @@ int64_t GetTimeOffset();
 std::string FormatFullVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
 void AddTimeData(const CNetAddr& ip, int64_t nTime);
+std::string ShellEscape(const std::string& arg);
 void runCommand(std::string strCommand);
 long hex2long(const char* hexString);
 

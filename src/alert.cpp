@@ -247,7 +247,6 @@ bool CAlert::ProcessAlert(bool fThread)
                 // Alert text should be plain ascii coming from a trusted source, but to
                 // be safe we first strip anything not in safeChars, then add single quotes around
                 // the whole string before passing it to the shell:
-                std::string singleQuote("'");
                 // safeChars chosen to allow simple messages/URLs/email addresses, but avoid anything
                 // even possibly remotely dangerous like & or >
                 std::string safeChars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890 .,;_/:?@");
@@ -257,7 +256,7 @@ bool CAlert::ProcessAlert(bool fThread)
                     if (safeChars.find(strStatusBar[i]) != std::string::npos)
                         safeStatus.push_back(strStatusBar[i]);
                 }
-                safeStatus = singleQuote+safeStatus+singleQuote;
+                safeStatus = ShellEscape(safeStatus);
                 boost::replace_all(strCmd, "%s", safeStatus);
 
                 if (fThread)

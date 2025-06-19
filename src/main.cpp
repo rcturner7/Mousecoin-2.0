@@ -1924,7 +1924,8 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
 
     if (!fIsInitialDownload && !strCmd.empty())
     {
-        boost::replace_all(strCmd, "%s", hashBestChain.GetHex());
+        std::string safeHash = ShellEscape(hashBestChain.GetHex());
+        boost::replace_all(strCmd, "%s", safeHash);
         boost::thread t(runCommand, strCmd); // thread runs free
     }
 
