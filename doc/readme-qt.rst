@@ -24,7 +24,7 @@ then execute the following:
     qmake
     make
 
-Alternatively, install Qt Creator and open the `Mousecoin-qt.pro` file.
+Alternatively, install Qt Creator and open the `Mic3.pro` file.
 
 An executable named `Mousecoin-qt` will be built.
 
