@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # W.J. van der Laan, 2011
 # Make spinning .mng animation from a .png
 # Requires imagemagick 6.7+
@@ -26,7 +26,7 @@ def frame_to_filename(frame):
     return path.join(TMPDIR, TMPNAME % frame)
 
 frame_files = []
-for frame in xrange(NUMFRAMES):
+for frame in range(NUMFRAMES):
     rotation = (frame + 0.5) / NUMFRAMES * 360.0
     if CLOCKWISE:
         rotation = -rotation
