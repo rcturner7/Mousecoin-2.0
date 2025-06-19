@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 '''
 Extract _("...") strings for translation and convert to Qt4 stringdefs so that
 they can be picked up by Qt linguist.
@@ -48,10 +48,10 @@ def parse_po(text):
 files = glob.glob('src/*.cpp') + glob.glob('src/*.h') 
 
 # xgettext -n --keyword=_ $FILES
-child = Popen(['xgettext','--output=-','-n','--keyword=_'] + files, stdout=PIPE)
+child = Popen(['xgettext', '--output=-', '-n', '--keyword=_'] + files, stdout=PIPE)
 (out, err) = child.communicate()
 
-messages = parse_po(out) 
+messages = parse_po(out.decode('utf-8'))
 
 f = open(OUT_CPP, 'w')
 f.write("""#include <QtGlobal>
