@@ -62,6 +62,7 @@ OBJS= \
     obj/noui.o \
     obj/kernel.o \
     obj/pbkdf2.o \
+    obj/crypto/sha256.o \
     obj/scrypt.o \
     obj/scrypt-x86.o \
     obj/scrypt-x86_64.o \
@@ -91,10 +92,13 @@ obj/scrypt-x86.o: scrypt-x86.S
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
 obj/scrypt-x86_64.o: scrypt-x86_64.S
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
-Mousecoind.exe: $(OBJS:obj/%=obj/%)
+Mousecoind.exe: obj obj/zerocoin obj/crypto $(OBJS:obj/%=obj/%)
 	g++ $(CFLAGS) $(LDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
+obj obj/zerocoin obj/crypto:
+	mkdir -p $@
 clean:
 	-del /Q Mousecoind
 	-del /Q obj\*
 	-del /Q obj\zerocoin\*
+	-del /Q obj\crypto\*
 FORCE:
