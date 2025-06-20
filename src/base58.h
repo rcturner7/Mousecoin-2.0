@@ -17,7 +17,7 @@
 
 #include <string>
 #include <vector>
-#include "bignum.h"
+#include <cstring>
 #include "key.h"
 #include "script.h"
 
@@ -26,41 +26,39 @@ static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnop
 // Encode a byte sequence as a base58-encoded string
 inline std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend)
 {
-    CAutoBN_CTX pctx;
-    CBigNum bn58 = 58;
-    CBigNum bn0 = 0;
-
-    // Convert big endian data to little endian
-    // Extra zero at the end make sure bignum will interpret as a positive number
-    std::vector<unsigned char> vchTmp(pend-pbegin+1, 0);
-    reverse_copy(pbegin, pend, vchTmp.begin());
-
-    // Convert little endian data to bignum
-    CBigNum bn;
-    bn.setvch(vchTmp);
-
-    // Convert bignum to std::string
-    std::string str;
-    // Expected size increase from base58 conversion is approximately 137%
-    // use 138% to be safe
-    str.reserve((pend - pbegin) * 138 / 100 + 1);
-    CBigNum dv;
-    CBigNum rem;
-    while (bn > bn0)
-    {
-        if (!BN_div(&dv, &rem, &bn, &bn58, pctx))
-            throw bignum_error("EncodeBase58 : BN_div failed");
-        bn = dv;
-        unsigned int c = rem.getulong();
-        str += pszBase58[c];
+    // Skip & count leading zeroes.
+    int zeroes = 0;
+    while (pbegin != pend && *pbegin == 0) {
+        pbegin++;
+        zeroes++;
     }
 
-    // Leading zeroes encoded as base58 zeros
-    for (const unsigned char* p = pbegin; p < pend && *p == 0; p++)
-        str += pszBase58[0];
+    // Allocate enough space in big-endian base58 representation.
+    std::vector<unsigned char> b58((pend - pbegin) * 138 / 100 + 1);
+    int length = 0;
 
-    // Convert little endian std::string to big endian
-    reverse(str.begin(), str.end());
+    while (pbegin != pend) {
+        int carry = *pbegin;
+        int i = 0;
+        for (std::vector<unsigned char>::reverse_iterator it = b58.rbegin();
+             (carry != 0 || i < length) && it != b58.rend(); ++it, ++i) {
+            carry += 256 * (*it);
+            *it = carry % 58;
+            carry /= 58;
+        }
+        length = i;
+        ++pbegin;
+    }
+
+    std::vector<unsigned char>::iterator it = b58.begin() + (b58.size() - length);
+    while (it != b58.end() && *it == 0)
+        ++it;
+
+    std::string str;
+    str.reserve(zeroes + (b58.end() - it));
+    str.assign(zeroes, pszBase58[0]);
+    while (it != b58.end())
+        str += pszBase58[*(it++)];
     return str;
 }
 
@@ -74,47 +72,47 @@ inline std::string EncodeBase58(const std::vector<unsigned char>& vch)
 // returns true if decoding is successful
 inline bool DecodeBase58(const char* psz, std::vector<unsigned char>& vchRet)
 {
-    CAutoBN_CTX pctx;
-    vchRet.clear();
-    CBigNum bn58 = 58;
-    CBigNum bn = 0;
-    CBigNum bnChar;
-    while (isspace(*psz))
+    while (*psz && isspace(*psz))
         psz++;
 
-    // Convert big endian string to bignum
-    for (const char* p = psz; *p; p++)
-    {
-        const char* p1 = strchr(pszBase58, *p);
-        if (p1 == NULL)
-        {
-            while (isspace(*p))
-                p++;
-            if (*p != '\0')
-                return false;
-            break;
-        }
-        bnChar.setulong(p1 - pszBase58);
-        if (!BN_mul(&bn, &bn, &bn58, pctx))
-            throw bignum_error("DecodeBase58 : BN_mul failed");
-        bn += bnChar;
+    int zeroes = 0;
+    while (*psz == pszBase58[0]) {
+        zeroes++;
+        psz++;
     }
 
-    // Get bignum as little endian data
-    std::vector<unsigned char> vchTmp = bn.getvch();
+    std::vector<unsigned char> b256(strlen(psz) * 733 / 1000 + 1);
+    int length = 0;
+    while (*psz && !isspace(*psz)) {
+        const char* ch = strchr(pszBase58, *psz);
+        if (ch == NULL)
+            return false;
+        int carry = ch - pszBase58;
+        int i = 0;
+        for (std::vector<unsigned char>::reverse_iterator it = b256.rbegin();
+             (carry != 0 || i < length) && it != b256.rend(); ++it, ++i) {
+            carry += 58 * (*it);
+            *it = carry % 256;
+            carry /= 256;
+        }
+        length = i;
+        ++psz;
+    }
 
-    // Trim off sign byte if present
-    if (vchTmp.size() >= 2 && vchTmp.end()[-1] == 0 && vchTmp.end()[-2] >= 0x80)
-        vchTmp.erase(vchTmp.end()-1);
+    while (isspace(*psz))
+        psz++;
+    if (*psz != 0)
+        return false;
 
-    // Restore leading zeros
-    int nLeadingZeros = 0;
-    for (const char* p = psz; *p == pszBase58[0]; p++)
-        nLeadingZeros++;
-    vchRet.assign(nLeadingZeros + vchTmp.size(), 0);
+    std::vector<unsigned char>::iterator it = b256.begin() + (b256.size() - length);
+    while (it != b256.end() && *it == 0)
+        ++it;
 
-    // Convert little endian data to big endian
-    reverse_copy(vchTmp.begin(), vchTmp.end(), vchRet.end() - vchTmp.size());
+    vchRet.clear();
+    vchRet.reserve(zeroes + (b256.end() - it));
+    vchRet.assign(zeroes, 0x00);
+    while (it != b256.end())
+        vchRet.push_back(*(it++));
     return true;
 }
 
