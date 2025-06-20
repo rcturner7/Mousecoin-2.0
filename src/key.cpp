@@ -12,25 +12,6 @@
 
 using cppcrypto::cpp_int;
 
-static cpp_int BignumToInt(const BIGNUM* bn)
-{
-    int nBytes = BN_num_bytes(bn);
-    std::vector<unsigned char> buf(nBytes);
-    BN_bn2bin(bn, &buf[0]);
-    return cppcrypto::bytes_to_int(&buf[0], buf.size());
-}
-
-static BIGNUM* IntToBignum(const cpp_int& num)
-{
-    size_t nBytes = (boost::multiprecision::msb(num) + 8) / 8;
-    if (nBytes == 0) nBytes = 1;
-    std::vector<unsigned char> buf(nBytes);
-    cppcrypto::int_to_bytes(num, &buf[0], nBytes);
-    BIGNUM* bn = BN_new();
-    BN_bin2bn(&buf[0], nBytes, bn);
-    return bn;
-}
-
 // Generate a private key from just the secret parameter
 int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
 {
@@ -116,28 +97,20 @@ int ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned ch
     e = BN_CTX_get(ctx);
     cpp_int e_int = cppcrypto::bytes_to_int(msg, msglen);
     if (8*msglen > n) e_int >>= 8-(n & 7);
-    cpp_int order_int = BignumToInt(order);
+    cpp_int order_int = cppcrypto::bignum_to_cpp_int(order);
     cpp_int e_neg = (order_int - e_int) % order_int;
     rr = BN_CTX_get(ctx);
-    cpp_int r_int = BignumToInt(ecsig->r);
+    cpp_int r_int = cppcrypto::bignum_to_cpp_int(ecsig->r);
     cpp_int rr_int = cppcrypto::mod_inverse(r_int, order_int);
-    BIGNUM* rr_bn = IntToBignum(rr_int);
-    BN_copy(rr, rr_bn);
-    BN_clear_free(rr_bn);
+    cppcrypto::cpp_int_to_bignum(rr_int, rr);
     sor = BN_CTX_get(ctx);
-    cpp_int s_int = BignumToInt(ecsig->s);
+    cpp_int s_int = cppcrypto::bignum_to_cpp_int(ecsig->s);
     cpp_int sor_int = cppcrypto::mod_mul(s_int, rr_int, order_int);
-    BIGNUM* sor_bn = IntToBignum(sor_int);
-    BN_copy(sor, sor_bn);
-    BN_clear_free(sor_bn);
+    cppcrypto::cpp_int_to_bignum(sor_int, sor);
     eor = BN_CTX_get(ctx);
     cpp_int eor_int = cppcrypto::mod_mul(e_neg, rr_int, order_int);
-    BIGNUM* eor_bn = IntToBignum(eor_int);
-    BN_copy(eor, eor_bn);
-    BN_clear_free(eor_bn);
-    BIGNUM* e_bn = IntToBignum(e_neg);
-    BN_copy(e, e_bn);
-    BN_clear_free(e_bn);
+    cppcrypto::cpp_int_to_bignum(eor_int, eor);
+    cppcrypto::cpp_int_to_bignum(e_neg, e);
     if (!EC_POINT_mul(group, Q, eor, R, sor, ctx)) { ret=-2; goto err; }
     if (!EC_KEY_set_public_key(eckey, Q)) { ret=-2; goto err; }
 
@@ -297,9 +270,10 @@ bool CKey::SetSecret(const CSecret& vchSecret, bool fCompressed)
     if (vchSecret.size() != 32)
         throw key_error("CKey::SetSecret() : secret must be 32 bytes");
     cpp_int secret_int = cppcrypto::bytes_to_int(&vchSecret[0], 32);
-    BIGNUM *bn = IntToBignum(secret_int);
+    BIGNUM *bn = BN_new();
     if (bn == NULL)
-        throw key_error("CKey::SetSecret() : conversion failed");
+        throw key_error("CKey::SetSecret() : BN_new failed");
+    cppcrypto::cpp_int_to_bignum(secret_int, bn);
     if (!EC_KEY_regenerate_key(pkey,bn))
     {
         BN_clear_free(bn);
@@ -454,12 +428,8 @@ bool CKey::SetCompactSignature(uint256 hash, const std::vector<unsigned char>& v
     ECDSA_SIG *sig = ECDSA_SIG_new();
     cpp_int r_int = cppcrypto::bytes_to_int(&vchSig[1], 32);
     cpp_int s_int = cppcrypto::bytes_to_int(&vchSig[33], 32);
-    BIGNUM* r_bn = IntToBignum(r_int);
-    BIGNUM* s_bn = IntToBignum(s_int);
-    BN_copy(sig->r, r_bn);
-    BN_copy(sig->s, s_bn);
-    BN_clear_free(r_bn);
-    BN_clear_free(s_bn);
+    cppcrypto::cpp_int_to_bignum(r_int, sig->r);
+    cppcrypto::cpp_int_to_bignum(s_int, sig->s);
 
     EC_KEY_free(pkey);
     pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
