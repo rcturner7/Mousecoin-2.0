@@ -48,7 +48,9 @@ LIBS+= \
  -Wl,-B$(LMODE2) \
    -l z \
    -l dl \
-   -l pthread
+   -l pthread \
+   -l ssl \
+   -l crypto
 
 
 # Hardening
