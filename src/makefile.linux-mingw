@@ -17,14 +17,14 @@ INCLUDEPATHS= \
  -I"$(CURDIR)" \
  -I"$(CURDIR)"/obj \
  -I"$(DEPSDIR)/boost_1_83_0" \
- -I"$(DEPSDIR)/db-6.0.20/build_unix" \
- -I"$(DEPSDIR)/openssl-1.0.1f/include" \
+ -I"$(DEPSDIR)/db-6.2.38/build_unix" \
+ -I"$(DEPSDIR)/openssl-3.1.1/include" \
  -I"$(DEPSDIR)"
 
 LIBPATHS= \
  -L"$(DEPSDIR)/boost_1_83_0/stage/lib" \
- -L"$(DEPSDIR)/db-6.0.20/build_unix" \
- -L"$(DEPSDIR)/openssl-1.0.1f"
+ -L"$(DEPSDIR)/db-6.2.38/build_unix" \
+ -L"$(DEPSDIR)/openssl-3.1.1"
 
 LIBS= \
  -l boost_system-mt \

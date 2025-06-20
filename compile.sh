@@ -12,7 +12,7 @@
 #                    (default: /usr/lib:/usr/local/bin)
 
 MXE_PREFIX=${MXE_PREFIX:-/mnt/mxe}
-MXE_TARGET=${MXE_TARGET:-i686-w64-mingw32.static}
+MXE_TARGET=${MXE_TARGET:-x86_64-w64-mingw32.static}
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 PROJECT_ROOT=${PROJECT_ROOT:-$SCRIPT_DIR}
 JOBS=${JOBS:-16}
