@@ -22,6 +22,14 @@ int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
     if (!eckey) return 0;
 
     const EC_GROUP *group = EC_KEY_get0_group(eckey);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    BIGNUM *sig_r = ecsig->r;
+    BIGNUM *sig_s = ecsig->s;
+#else
+    const BIGNUM *sig_r = NULL;
+    const BIGNUM *sig_s = NULL;
+    ECDSA_SIG_get0(ecsig, &sig_r, &sig_s);
+#endif
 
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
@@ -80,7 +88,7 @@ int ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned ch
     x = BN_CTX_get(ctx);
     if (!BN_copy(x, order)) { ret=-1; goto err; }
     if (!BN_mul_word(x, i)) { ret=-1; goto err; }
-    if (!BN_add(x, x, ecsig->r)) { ret=-1; goto err; }
+    if (!BN_add(x, x, sig_r)) { ret=-1; goto err; }
     field = BN_CTX_get(ctx);
     if (!EC_GROUP_get_curve_GFp(group, field, NULL, NULL, ctx)) { ret=-2; goto err; }
     if (BN_cmp(x, field) >= 0) { ret=0; goto err; }
@@ -100,11 +108,11 @@ int ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned ch
     cpp_int order_int = cppcrypto::bignum_to_cpp_int(order);
     cpp_int e_neg = (order_int - e_int) % order_int;
     rr = BN_CTX_get(ctx);
-    cpp_int r_int = cppcrypto::bignum_to_cpp_int(ecsig->r);
+    cpp_int r_int = cppcrypto::bignum_to_cpp_int(sig_r);
     cpp_int rr_int = cppcrypto::mod_inverse(r_int, order_int);
     cppcrypto::cpp_int_to_bignum(rr_int, rr);
     sor = BN_CTX_get(ctx);
-    cpp_int s_int = cppcrypto::bignum_to_cpp_int(ecsig->s);
+    cpp_int s_int = cppcrypto::bignum_to_cpp_int(sig_s);
     cpp_int sor_int = cppcrypto::mod_mul(s_int, rr_int, order_int);
     cppcrypto::cpp_int_to_bignum(sor_int, sor);
     eor = BN_CTX_get(ctx);
@@ -346,6 +354,14 @@ bool CKey::Sign(uint256 hash, std::vector<unsigned char>& vchSig)
     ECDSA_SIG *sig = ECDSA_do_sign((unsigned char*)&hash, sizeof(hash), pkey);
     if (sig == NULL)
         return false;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    BIGNUM *sig_r = sig->r;
+    BIGNUM *sig_s = sig->s;
+#else
+    const BIGNUM *sig_r = NULL;
+    const BIGNUM *sig_s = NULL;
+    ECDSA_SIG_get0(sig, &sig_r, &sig_s);
+#endif
     BN_CTX *ctx = BN_CTX_new();
     BN_CTX_start(ctx);
     const EC_GROUP *group = EC_KEY_get0_group(pkey);
@@ -353,9 +369,16 @@ bool CKey::Sign(uint256 hash, std::vector<unsigned char>& vchSig)
     BIGNUM *halforder = BN_CTX_get(ctx);
     EC_GROUP_get_order(group, order, ctx);
     BN_rshift1(halforder, order);
-    if (BN_cmp(sig->s, halforder) > 0) {
+    if (BN_cmp(sig_s, halforder) > 0) {
         // enforce low S values, by negating the value (modulo the order) if above order/2.
-        BN_sub(sig->s, order, sig->s);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+        BN_sub(sig_s, order, sig_s);
+#else
+        BIGNUM* new_r = BN_dup(sig_r);
+        BIGNUM* new_s = BN_new();
+        BN_sub(new_s, order, sig_s);
+        ECDSA_SIG_set0(sig, new_r, new_s);
+#endif
     }
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
@@ -380,8 +403,16 @@ bool CKey::SignCompact(uint256 hash, std::vector<unsigned char>& vchSig)
         return false;
     vchSig.clear();
     vchSig.resize(65,0);
-    int nBitsR = BN_num_bits(sig->r);
-    int nBitsS = BN_num_bits(sig->s);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    BIGNUM *sig_r = sig->r;
+    BIGNUM *sig_s = sig->s;
+#else
+    const BIGNUM *sig_r = NULL;
+    const BIGNUM *sig_s = NULL;
+    ECDSA_SIG_get0(sig, &sig_r, &sig_s);
+#endif
+    int nBitsR = BN_num_bits(sig_r);
+    int nBitsS = BN_num_bits(sig_s);
     if (nBitsR <= 256 && nBitsS <= 256)
     {
         int nRecId = -1;
@@ -406,8 +437,8 @@ bool CKey::SignCompact(uint256 hash, std::vector<unsigned char>& vchSig)
         }
 
         vchSig[0] = nRecId+27+(fCompressedPubKey ? 4 : 0);
-        BN_bn2bin(sig->r,&vchSig[33-(nBitsR+7)/8]);
-        BN_bn2bin(sig->s,&vchSig[65-(nBitsS+7)/8]);
+        BN_bn2bin(sig_r,&vchSig[33-(nBitsR+7)/8]);
+        BN_bn2bin(sig_s,&vchSig[65-(nBitsS+7)/8]);
         fOk = true;
     }
     ECDSA_SIG_free(sig);
@@ -428,8 +459,21 @@ bool CKey::SetCompactSignature(uint256 hash, const std::vector<unsigned char>& v
     ECDSA_SIG *sig = ECDSA_SIG_new();
     cpp_int r_int = cppcrypto::bytes_to_int(&vchSig[1], 32);
     cpp_int s_int = cppcrypto::bytes_to_int(&vchSig[33], 32);
-    cppcrypto::cpp_int_to_bignum(r_int, sig->r);
-    cppcrypto::cpp_int_to_bignum(s_int, sig->s);
+    BIGNUM* bn_r = BN_new();
+    BIGNUM* bn_s = BN_new();
+    cppcrypto::cpp_int_to_bignum(r_int, bn_r);
+    cppcrypto::cpp_int_to_bignum(s_int, bn_s);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    sig->r = bn_r;
+    sig->s = bn_s;
+#else
+    if (!ECDSA_SIG_set0(sig, bn_r, bn_s)) {
+        BN_free(bn_r);
+        BN_free(bn_s);
+        ECDSA_SIG_free(sig);
+        return false;
+    }
+#endif
 
     EC_KEY_free(pkey);
     pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
