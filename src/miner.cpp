@@ -7,6 +7,7 @@
 #include "txdb.h"
 #include "miner.h"
 #include "kernel.h"
+#include "crypto/sha256.h"
 #include <memory>
 
 using namespace std;
@@ -38,20 +39,18 @@ static const unsigned int pSHA256InitState[8] =
 
 void SHA256Transform(void* pstate, void* pinput, const void* pinit)
 {
-    SHA256_CTX ctx;
+    uint32_t state[8];
     unsigned char data[64];
-
-    SHA256_Init(&ctx);
 
     for (int i = 0; i < 16; i++)
         ((uint32_t*)data)[i] = ByteReverse(((uint32_t*)pinput)[i]);
 
     for (int i = 0; i < 8; i++)
-        ctx.h[i] = ((uint32_t*)pinit)[i];
+        state[i] = ((const uint32_t*)pinit)[i];
 
-    SHA256_Update(&ctx, data, sizeof(data));
+    ::SHA256Transform(state, data);
     for (int i = 0; i < 8; i++)
-        ((uint32_t*)pstate)[i] = ctx.h[i];
+        ((uint32_t*)pstate)[i] = state[i];
 }
 
 // Some explaining would be appreciated
