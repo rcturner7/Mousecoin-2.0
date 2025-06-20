@@ -8,6 +8,28 @@
 #include <openssl/obj_mac.h>
 
 #include "key.h"
+#include "cpp_int_utils.h"
+
+using cppcrypto::cpp_int;
+
+static cpp_int BignumToInt(const BIGNUM* bn)
+{
+    int nBytes = BN_num_bytes(bn);
+    std::vector<unsigned char> buf(nBytes);
+    BN_bn2bin(bn, &buf[0]);
+    return cppcrypto::bytes_to_int(&buf[0], buf.size());
+}
+
+static BIGNUM* IntToBignum(const cpp_int& num)
+{
+    size_t nBytes = (boost::multiprecision::msb(num) + 8) / 8;
+    if (nBytes == 0) nBytes = 1;
+    std::vector<unsigned char> buf(nBytes);
+    cppcrypto::int_to_bytes(num, &buf[0], nBytes);
+    BIGNUM* bn = BN_new();
+    BN_bin2bn(&buf[0], nBytes, bn);
+    return bn;
+}
 
 // Generate a private key from just the secret parameter
 int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
@@ -66,7 +88,6 @@ int ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned ch
     EC_POINT *O = NULL;
     EC_POINT *Q = NULL;
     BIGNUM *rr = NULL;
-    BIGNUM *zero = NULL;
     int n = 0;
     int i = recid / 2;
 
@@ -93,17 +114,30 @@ int ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned ch
     if ((Q = EC_POINT_new(group)) == NULL) { ret = -2; goto err; }
     n = EC_GROUP_get_degree(group);
     e = BN_CTX_get(ctx);
-    if (!BN_bin2bn(msg, msglen, e)) { ret=-1; goto err; }
-    if (8*msglen > n) BN_rshift(e, e, 8-(n & 7));
-    zero = BN_CTX_get(ctx);
-    if (!BN_zero(zero)) { ret=-1; goto err; }
-    if (!BN_mod_sub(e, zero, e, order, ctx)) { ret=-1; goto err; }
+    cpp_int e_int = cppcrypto::bytes_to_int(msg, msglen);
+    if (8*msglen > n) e_int >>= 8-(n & 7);
+    cpp_int order_int = BignumToInt(order);
+    cpp_int e_neg = (order_int - e_int) % order_int;
     rr = BN_CTX_get(ctx);
-    if (!BN_mod_inverse(rr, ecsig->r, order, ctx)) { ret=-1; goto err; }
+    cpp_int r_int = BignumToInt(ecsig->r);
+    cpp_int rr_int = cppcrypto::mod_inverse(r_int, order_int);
+    BIGNUM* rr_bn = IntToBignum(rr_int);
+    BN_copy(rr, rr_bn);
+    BN_clear_free(rr_bn);
     sor = BN_CTX_get(ctx);
-    if (!BN_mod_mul(sor, ecsig->s, rr, order, ctx)) { ret=-1; goto err; }
+    cpp_int s_int = BignumToInt(ecsig->s);
+    cpp_int sor_int = cppcrypto::mod_mul(s_int, rr_int, order_int);
+    BIGNUM* sor_bn = IntToBignum(sor_int);
+    BN_copy(sor, sor_bn);
+    BN_clear_free(sor_bn);
     eor = BN_CTX_get(ctx);
-    if (!BN_mod_mul(eor, e, rr, order, ctx)) { ret=-1; goto err; }
+    cpp_int eor_int = cppcrypto::mod_mul(e_neg, rr_int, order_int);
+    BIGNUM* eor_bn = IntToBignum(eor_int);
+    BN_copy(eor, eor_bn);
+    BN_clear_free(eor_bn);
+    BIGNUM* e_bn = IntToBignum(e_neg);
+    BN_copy(e, e_bn);
+    BN_clear_free(e_bn);
     if (!EC_POINT_mul(group, Q, eor, R, sor, ctx)) { ret=-2; goto err; }
     if (!EC_KEY_set_public_key(eckey, Q)) { ret=-2; goto err; }
 
@@ -262,9 +296,10 @@ bool CKey::SetSecret(const CSecret& vchSecret, bool fCompressed)
         throw key_error("CKey::SetSecret() : EC_KEY_new_by_curve_name failed");
     if (vchSecret.size() != 32)
         throw key_error("CKey::SetSecret() : secret must be 32 bytes");
-    BIGNUM *bn = BN_bin2bn(&vchSecret[0],32,BN_new());
+    cpp_int secret_int = cppcrypto::bytes_to_int(&vchSecret[0], 32);
+    BIGNUM *bn = IntToBignum(secret_int);
     if (bn == NULL)
-        throw key_error("CKey::SetSecret() : BN_bin2bn failed");
+        throw key_error("CKey::SetSecret() : conversion failed");
     if (!EC_KEY_regenerate_key(pkey,bn))
     {
         BN_clear_free(bn);
@@ -417,8 +452,14 @@ bool CKey::SetCompactSignature(uint256 hash, const std::vector<unsigned char>& v
     if (nV<27 || nV>=35)
         return false;
     ECDSA_SIG *sig = ECDSA_SIG_new();
-    BN_bin2bn(&vchSig[1],32,sig->r);
-    BN_bin2bn(&vchSig[33],32,sig->s);
+    cpp_int r_int = cppcrypto::bytes_to_int(&vchSig[1], 32);
+    cpp_int s_int = cppcrypto::bytes_to_int(&vchSig[33], 32);
+    BIGNUM* r_bn = IntToBignum(r_int);
+    BIGNUM* s_bn = IntToBignum(s_int);
+    BN_copy(sig->r, r_bn);
+    BN_copy(sig->s, s_bn);
+    BN_clear_free(r_bn);
+    BN_clear_free(s_bn);
 
     EC_KEY_free(pkey);
     pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
