@@ -3,6 +3,7 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <vector>
+#include <openssl/bn.h>
 
 namespace cppcrypto {
 using boost::multiprecision::cpp_int;
@@ -47,6 +48,23 @@ inline cpp_int mod_inverse(cpp_int a, cpp_int n)
 inline cpp_int mod_mul(const cpp_int& a, const cpp_int& b, const cpp_int& mod)
 {
     return (a * b) % mod;
+}
+
+inline cpp_int bignum_to_cpp_int(const BIGNUM* bn)
+{
+    int nBytes = BN_num_bytes(bn);
+    std::vector<unsigned char> buf(nBytes ? nBytes : 1);
+    BN_bn2bin(bn, buf.data());
+    return bytes_to_int(buf.data(), buf.size());
+}
+
+inline void cpp_int_to_bignum(const cpp_int& value, BIGNUM* bn)
+{
+    size_t nBytes = (boost::multiprecision::msb(value) + 8) / 8;
+    if (nBytes == 0) nBytes = 1;
+    std::vector<unsigned char> buf(nBytes);
+    int_to_bytes(value, buf.data(), nBytes);
+    BN_bin2bn(buf.data(), nBytes, bn);
 }
 
 } // namespace cppcrypto
