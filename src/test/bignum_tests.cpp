@@ -1,8 +1,16 @@
 #include <boost/test/unit_test.hpp>
 #include <limits>
+#include <boost/multiprecision/cpp_int.hpp>
 
 #include "bignum.h"
-#include "util.h"
+
+using boost::multiprecision::cpp_int;
+
+static std::string IntToString(int64 n)
+{
+    cpp_int value = n;
+    return value.convert_to<std::string>();
+}
 
 BOOST_AUTO_TEST_SUITE(bignum_tests)
 
@@ -60,65 +68,65 @@ BOOST_AUTO_TEST_CASE(bignum_setint64)
     {
         n = 0;
         CBigNum num(n);
-        BOOST_CHECK(num.ToString() == "0");
+        BOOST_CHECK(num.ToString() == IntToString(n));
         num.setulong(0);
         BOOST_CHECK(num.ToString() == "0");
         mysetint64(num, n);
-        BOOST_CHECK(num.ToString() == "0");
+        BOOST_CHECK(num.ToString() == IntToString(n));
     }
     {
         n = 1;
         CBigNum num(n);
-        BOOST_CHECK(num.ToString() == "1");
+        BOOST_CHECK(num.ToString() == IntToString(n));
         num.setulong(0);
         BOOST_CHECK(num.ToString() == "0");
         mysetint64(num, n);
-        BOOST_CHECK(num.ToString() == "1");
+        BOOST_CHECK(num.ToString() == IntToString(n));
     }
     {
         n = -1;
         CBigNum num(n);
-        BOOST_CHECK(num.ToString() == "-1");
+        BOOST_CHECK(num.ToString() == IntToString(n));
         num.setulong(0);
         BOOST_CHECK(num.ToString() == "0");
         mysetint64(num, n);
-        BOOST_CHECK(num.ToString() == "-1");
+        BOOST_CHECK(num.ToString() == IntToString(n));
     }
     {
         n = 5;
         CBigNum num(n);
-        BOOST_CHECK(num.ToString() == "5");
+        BOOST_CHECK(num.ToString() == IntToString(n));
         num.setulong(0);
         BOOST_CHECK(num.ToString() == "0");
         mysetint64(num, n);
-        BOOST_CHECK(num.ToString() == "5");
+        BOOST_CHECK(num.ToString() == IntToString(n));
     }
     {
         n = -5;
         CBigNum num(n);
-        BOOST_CHECK(num.ToString() == "-5");
+        BOOST_CHECK(num.ToString() == IntToString(n));
         num.setulong(0);
         BOOST_CHECK(num.ToString() == "0");
         mysetint64(num, n);
-        BOOST_CHECK(num.ToString() == "-5");
+        BOOST_CHECK(num.ToString() == IntToString(n));
     }
     {
         n = std::numeric_limits<int64>::min();
         CBigNum num(n);
-        BOOST_CHECK(num.ToString() == "-9223372036854775808");
+        BOOST_CHECK(num.ToString() == IntToString(n));
         num.setulong(0);
         BOOST_CHECK(num.ToString() == "0");
         mysetint64(num, n);
-        BOOST_CHECK(num.ToString() == "-9223372036854775808");
+        BOOST_CHECK(num.ToString() == IntToString(n));
     }
     {
         n = std::numeric_limits<int64>::max();
         CBigNum num(n);
-        BOOST_CHECK(num.ToString() == "9223372036854775807");
+        BOOST_CHECK(num.ToString() == IntToString(n));
         num.setulong(0);
         BOOST_CHECK(num.ToString() == "0");
         mysetint64(num, n);
-        BOOST_CHECK(num.ToString() == "9223372036854775807");
+        BOOST_CHECK(num.ToString() == IntToString(n));
     }
 }
 
