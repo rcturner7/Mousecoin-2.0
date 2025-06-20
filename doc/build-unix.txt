@@ -25,7 +25,12 @@ Dependencies
  libdb       Berkeley DB       Blockchain & wallet storage
  libboost    Boost             C++ Library
  miniupnpc   UPnP Support      Optional firewall-jumping support
- libqrencode QRCode generation Optional QRCode generation
+libqrencode QRCode generation Optional QRCode generation
+openssl     SSL/TLS          Tested with >=1.0.1; 1.1+ requires compatibility code
+
+Building against OpenSSL 1.0.x works without any additional changes.
+For OpenSSL 1.1 or newer the compatibility wrappers in this source tree
+are required.
 
 Note that libexecinfo should be installed, if you building under *BSD systems. 
 This library provides backtrace facility.
@@ -55,6 +60,7 @@ Versions used in this release:
  Berkeley DB   6.2.38
  Boost         1.83.0
  miniupnpc     2.2.4
+ OpenSSL      3.1.1 (tested with >=1.0.1)
 
 Dependency Build Instructions: Ubuntu & Debian
 ----------------------------------------------
@@ -63,6 +69,7 @@ sudo apt-get install libdb++-dev
 sudo apt-get install libboost-all-dev
 sudo apt-get install libminiupnpc-dev
 sudo apt-get install libqrencode-dev
+sudo apt-get install libssl-dev
 
 
 If using Boost 1.37, append -mt to the boost libraries in the makefile.

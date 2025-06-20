@@ -40,6 +40,7 @@ Transaction confirmations: 30 blocks<br>
 
 ## <b><u>Build:</u></b><br>
 - Install the required packages listed in [doc/build-unix.txt](doc/build-unix.txt) and run `cd src && make -f makefile.unix` for the headless daemon.<br>
+- Building against OpenSSL 1.0.x needs no changes. For OpenSSL 1.1+ ensure these sources are used.<br>
 - Build the Qt wallet with `qmake Mic3.pro` followed by `make`.<br>
 - Platform specific details are available in [doc/build-osx.txt](doc/build-osx.txt) and [doc/build-msw.txt](doc/build-msw.txt).<br>
 
