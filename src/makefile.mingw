@@ -5,21 +5,21 @@
 USE_UPNP:=0
 
 INCLUDEPATHS= \
- -I"C:\boost-1.50.0-mgw" \
- -I"C:\db-4.8.30.NC-mgw\build_unix" \
- -I"C:\openssl-1.0.1c-mgw\include"
+ -I"C:\boost-1.83.0-mgw" \
+ -I"C:\db-6.2.38-mgw\build_unix" \
+ -I"C:\openssl-3.1.1-mgw\include"
 
 LIBPATHS= \
- -L"C:\boost-1.50.0-mgw\stage\lib" \
- -L"C:\db-4.8.30.NC-mgw\build_unix" \
- -L"C:\openssl-1.0.1c-mgw"
+ -L"C:\boost-1.83.0-mgw\stage\lib" \
+ -L"C:\db-6.2.38-mgw\build_unix" \
+ -L"C:\openssl-3.1.1-mgw"
 
 LIBS= \
- -l boost_system-mgw44-mt-1_53 \
- -l boost_filesystem-mgw44-mt-1_53 \
- -l boost_program_options-mgw44-mt-1_53 \
- -l boost_thread-mgw44-mt-1_53 \
- -l boost_chrono-mgw44-mt-1_53 \
+ -l boost_system-mt \
+ -l boost_filesystem-mt \
+ -l boost_program_options-mt \
+ -l boost_thread-mt \
+ -l boost_chrono-mt \
  -l db_cxx \
  -l ssl \
  -l crypto
@@ -35,8 +35,8 @@ ifndef USE_UPNP
 	override USE_UPNP = -
 endif
 ifneq (${USE_UPNP}, -)
- INCLUDEPATHS += -I"C:\miniupnpc-1.6-mgw"
- LIBPATHS += -L"C:\miniupnpc-1.6-mgw"
+ INCLUDEPATHS += -I"C:\miniupnpc-2.2.4-mgw"
+ LIBPATHS += -L"C:\miniupnpc-2.2.4-mgw"
  LIBS += -l miniupnpc -l iphlpapi
  DEFS += -DSTATICLIB -DUSE_UPNP=$(USE_UPNP)
 endif
