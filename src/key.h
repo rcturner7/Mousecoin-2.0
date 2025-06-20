@@ -14,6 +14,8 @@
 #include "util.h"
 
 #include <openssl/ec.h> // for EC_KEY definition
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
 
 // secp160k1
 // const unsigned int PRIVATE_KEY_SIZE = 192;

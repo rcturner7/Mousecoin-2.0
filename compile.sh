@@ -32,6 +32,7 @@ cd ../..
         BOOST_THREAD_LIB_SUFFIX=_win32-mt \
         BOOST_INCLUDE_PATH="$MXE_PREFIX/usr/$MXE_TARGET/include/boost" \
         BOOST_LIB_PATH="$MXE_PREFIX/usr/$MXE_TARGET/lib" \
+        SECP256K1_LIB_PATH="$SECP256K1_LIB_PATH" \
         OPENSSL_INCLUDE_PATH="$MXE_PREFIX/usr/$MXE_TARGET/include/openssl" \
         OPENSSL_LIB_PATH="$MXE_PREFIX/usr/$MXE_TARGET/lib" \
         BDB_INCLUDE_PATH="$MXE_PREFIX/usr/$MXE_TARGET/include" \

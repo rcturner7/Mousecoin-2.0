@@ -41,9 +41,10 @@ endif
 
 LIBS+= \
  -Wl,-B$(LMODE2) \
-   -l z \
-   -l dl \
-   -l pthread
+  -lsecp256k1 \
+  -l z \
+  -l dl \
+  -l pthread
 
 
 # Hardening
