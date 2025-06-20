@@ -142,6 +142,7 @@ OBJS= \
     obj/noui.o \
     obj/kernel.o \
     obj/pbkdf2.o \
+    obj/crypto/sha256.o \
     obj/scrypt.o \
     obj/scrypt-arm.o \
     obj/scrypt-x86.o \
@@ -170,9 +171,9 @@ obj/txdb-leveldb.o: leveldb/libleveldb.a
 # auto-generated dependencies:
 -include obj/*.P
 
-Mousecoind:: obj obj/zerocoin
+Mousecoind:: obj obj/zerocoin obj/crypto
 
-obj obj/zerocoin:
+obj obj/zerocoin obj/crypto:
 	mkdir -p $@
 
 obj/build.h: FORCE
@@ -210,8 +211,10 @@ clean:
 	-rm -f Mousecoind
 	-rm -f obj/*.o
 	-rm -f obj/zerocoin/*.o
+	-rm -f obj/crypto/*.o
 	-rm -f obj/*.P
 	-rm -f obj/zerocoin/*.P
+	-rm -f obj/crypto/*.P
 	-rm -f obj/build.h
 
 FORCE:
