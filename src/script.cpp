@@ -323,7 +323,6 @@ static bool IsCanonicalSignature(const valtype &vchSig) {
 
 bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, const CTransaction& txTo, unsigned int nIn, int nHashType)
 {
-    CAutoBN_CTX pctx;
     CScript::const_iterator pc = script.begin();
     CScript::const_iterator pend = script.end();
     CScript::const_iterator pbegincodehash = script.begin();
@@ -880,18 +879,19 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                         break;
 
                     case OP_MUL:
-                        if (!BN_mul(bn.bn, bn1.bn, bn2.bn, pctx))
-                            return false;
+                        bn = bn1 * bn2;
                         break;
 
                     case OP_DIV:
-                        if (!BN_div(bn.bn, NULL, bn1.bn, bn2.bn, pctx))
+                        if (bn2 == bnZero)
                             return false;
+                        bn = bn1 / bn2;
                         break;
 
                     case OP_MOD:
-                        if (!BN_mod(bn.bn, bn1.bn, bn2.bn, pctx))
+                        if (bn2 == bnZero)
                             return false;
+                        bn = bn1 % bn2;
                         break;
 
                     case OP_LSHIFT:
