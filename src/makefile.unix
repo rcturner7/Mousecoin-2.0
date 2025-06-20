@@ -4,12 +4,17 @@
 
 USE_UPNP:=0
 
+# Directory containing this makefile. Allows invoking make from
+# outside of src/ while still locating sources correctly.
+BASEDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+VPATH   := $(BASEDIR) $(BASEDIR)/zerocoin
+
 LINK:=$(CXX)
 ARCH := $(shell uname -m)
 
 DEFS=-DBOOST_SPIRIT_THREADSAFE
 
-DEFS += $(addprefix -I,$(CURDIR) $(CURDIR)/obj $(BOOST_INCLUDE_PATH) $(BDB_INCLUDE_PATH))
+DEFS += $(addprefix -I,$(BASEDIR) $(BASEDIR)/obj $(BOOST_INCLUDE_PATH) $(BDB_INCLUDE_PATH))
 DEFS += -DALLOW_BURN
 LIBS = $(addprefix -L,$(BOOST_LIB_PATH) $(BDB_LIB_PATH))
 
@@ -144,13 +149,13 @@ OBJS= \
 
 all: Mousecoind
 
-LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
-DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
-DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+LIBS += $(BASEDIR)/leveldb/libleveldb.a $(BASEDIR)/leveldb/libmemenv.a
+DEFS += $(addprefix -I,$(BASEDIR)/leveldb/include)
+DEFS += $(addprefix -I,$(BASEDIR)/leveldb/helpers)
 OBJS += obj/txdb-leveldb.o
-leveldb/libleveldb.a:
-	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
-obj/txdb-leveldb.o: leveldb/libleveldb.a
+$(BASEDIR)/leveldb/libleveldb.a:
+	@echo "Building LevelDB ..."; cd $(BASEDIR)/leveldb; make libleveldb.a libmemenv.a; cd $(BASEDIR);
+obj/txdb-leveldb.o: $(BASEDIR)/leveldb/libleveldb.a
 
 # auto-generated dependencies:
 -include obj/*.P
@@ -161,7 +166,7 @@ obj obj/zerocoin:
 	mkdir -p $@
 
 obj/build.h: FORCE
-	/bin/sh ../share/genbuild.sh obj/build.h
+	        /bin/sh $(BASEDIR)/../share/genbuild.sh obj/build.h
 version.cpp: obj/build.h
 DEFS += -DHAVE_BUILD_INFO
 
